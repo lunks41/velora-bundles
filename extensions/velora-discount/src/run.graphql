@@ -1,0 +1,33 @@
+query Input {
+  cart {
+    lines {
+      id
+      quantity
+      cost {
+        subtotalAmount {
+          amount
+        }
+      }
+      attribute(key: "_velora_bundle_id") {
+        value
+      }
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          id
+          product {
+            id
+          }
+        }
+      }
+    }
+  }
+  shop {
+    metafield(namespace: "velora_bundles", key: "active_bundles") {
+      jsonValue
+    }
+  }
+  discount {
+    discountClasses
+  }
+}

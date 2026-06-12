@@ -1,0 +1,6 @@
+api_version = "2025-10"
+
+[[extensions]]
+name = "bundle-widget"
+handle = "bundle-widget"
+type = "theme"

@@ -1,0 +1,230 @@
+---
+description: Shopify platform rules — applied when working on any Shopify API, Function, webhook, or extension code
+globs: ["extensions/**", "app/shopify.server.ts", "app/utils/webhooks*", "app/utils/metafields*"]
+alwaysApply: false
+---
+
+# Shopify Platform Rules
+
+## GraphQL Admin API — always use this
+
+### Product query pattern
+```typescript
+const response = await admin.graphql(`
+  query GetProducts($first: Int!) {
+    products(first: $first) {
+      edges {
+        node {
+          id
+          title
+          images(first: 1) {
+            edges {
+              node { url altText }
+            }
+          }
+          variants(first: 10) {
+            edges {
+              node { id title price }
+            }
+          }
+        }
+      }
+    }
+  }
+`, { variables: { first: 10 } });
+const data = await response.json();
+```
+
+### Metafield write pattern (for Shopify Functions)
+```typescript
+await admin.graphql(`
+  mutation SetMetafield($metafields: [MetafieldsSetInput!]!) {
+    metafieldsSet(metafields: $metafields) {
+      metafields { id key value }
+      userErrors { field message }
+    }
+  }
+`, {
+  variables: {
+    metafields: [{
+      ownerId: `gid://shopify/Shop/${shopId}`,
+      namespace: "velora_bundles",
+      key: `bundle_${bundleId}`,
+      value: JSON.stringify(bundleConfig),
+      type: "json"
+    }]
+  }
+});
+```
+
+## Shopify Functions — critical rules
+
+### Architecture constraint
+Functions run ON Shopify's servers. They CANNOT make HTTP calls at runtime.
+Bundle config MUST be pre-synced to metafields before checkout.
+
+### Function input.graphql pattern
+```graphql
+query RunInput {
+  cart {
+    lines {
+      id
+      quantity
+      merchandise {
+        ... on ProductVariant {
+          id
+          product { id }
+        }
+      }
+    }
+  }
+  shop {
+    metafield(namespace: "velora_bundles", key: "active_bundles") {
+      value
+    }
+  }
+}
+```
+
+### Function index.ts pattern
+```typescript
+import type { RunInput, FunctionRunResult } from "../generated/api";
+
+export function run(input: RunInput): FunctionRunResult {
+  const bundleConfig = JSON.parse(
+    input.shop.metafield?.value ?? "[]"
+  );
+  
+  const discounts = [];
+  
+  for (const bundle of bundleConfig) {
+    const matchingLines = input.cart.lines.filter(line =>
+      bundle.productIds.includes(line.merchandise.product.id)
+    );
+    
+    if (matchingLines.length >= bundle.minQuantity) {
+      discounts.push({
+        targets: matchingLines.map(line => ({
+          cartLine: { id: line.id }
+        })),
+        value: {
+          percentage: { value: bundle.discountPercentage.toString() }
+        }
+      });
+    }
+  }
+  
+  return { discounts };
+}
+```
+
+## Webhooks — verification pattern
+```typescript
+import { authenticate } from "~/shopify.server";
+
+export async function action({ request }: ActionFunctionArgs) {
+  const { topic, shop, payload, webhookId } = 
+    await authenticate.webhook(request);
+  
+  // Idempotency check
+  const existing = await prisma.webhookLog.findUnique({
+    where: { shopifyWebhookId: webhookId }
+  });
+  if (existing?.processed) return new Response("Already processed");
+  
+  // Process based on topic
+  switch (topic) {
+    case "APP_UNINSTALLED":
+      await handleUninstall(shop);
+      break;
+    case "ORDERS_PAID":
+      await handleOrderPaid(shop, payload);
+      break;
+    // GDPR - required
+    case "CUSTOMERS_DATA_REQUEST":
+    case "CUSTOMERS_REDACT":
+    case "SHOP_REDACT":
+      break; // Velora stores no customer PII
+  }
+  
+  // Mark as processed
+  await prisma.webhookLog.upsert({
+    where: { shopifyWebhookId: webhookId },
+    update: { processed: true, processedAt: new Date() },
+    create: { shopId: shop, topic, shopifyWebhookId: webhookId, processed: true }
+  });
+  
+  return new Response("OK");
+}
+```
+
+## Billing API — plan setup
+```typescript
+// shopify.server.ts billing config
+export const PLANS = {
+  FREE: { name: "Free", amount: 0, currencyCode: "USD" },
+  STARTER: {
+    name: "Starter",
+    amount: 9.99,
+    currencyCode: "USD",
+    trialDays: 14,
+    interval: "EVERY_30_DAYS"
+  },
+  GROWTH: {
+    name: "Growth",
+    amount: 19.99,
+    currencyCode: "USD",
+    trialDays: 14,
+    interval: "EVERY_30_DAYS"
+  },
+  PRO: {
+    name: "Pro",
+    amount: 39.99,
+    currencyCode: "USD",
+    trialDays: 14,
+    interval: "EVERY_30_DAYS"
+  }
+};
+
+export const PLAN_LIMITS = {
+  FREE: { bundles: 1, abTesting: false, aiFeatures: false },
+  STARTER: { bundles: 5, abTesting: false, aiFeatures: false },
+  GROWTH: { bundles: Infinity, abTesting: true, aiFeatures: false },
+  PRO: { bundles: Infinity, abTesting: true, aiFeatures: true }
+};
+```
+
+## Theme App Extension — widget liquid block
+```liquid
+{{- 'bundle-widget.css' | asset_url | stylesheet_tag -}}
+
+<div
+  id="velora-bundle-widget"
+  data-shop="{{ shop.permanent_domain }}"
+  data-product-id="{{ product.id }}"
+  data-position="{{ block.settings.position }}"
+>
+  <div class="velora-skeleton">Loading bundles...</div>
+</div>
+
+<script src="{{ 'bundle-widget.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Velora Bundle Widget",
+  "target": "section",
+  "settings": [
+    {
+      "type": "select",
+      "id": "position",
+      "label": "Widget position",
+      "options": [
+        { "value": "above_atc", "label": "Above Add to Cart" },
+        { "value": "below_atc", "label": "Below Add to Cart" }
+      ],
+      "default": "above_atc"
+    }
+  ]
+}
+{% endschema %}
+```

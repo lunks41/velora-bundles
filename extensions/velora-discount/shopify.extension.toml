@@ -1,0 +1,12 @@
+api_version = "2025-10"
+
+[[extensions]]
+name = "velora-discount"
+handle = "velora-discount"
+type = "function"
+description = "Velora bundle discounts"
+
+  [[extensions.targeting]]
+  target = "cart.lines.discounts.generate.run"
+  input_query = "src/run.graphql"
+  export = "run"

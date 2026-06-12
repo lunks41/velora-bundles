@@ -1,0 +1,196 @@
+---
+description: Testing rules — applied when writing tests, QA checklists, or debugging
+globs: ["**/*.test.ts", "**/*.spec.ts", "tests/**"]
+alwaysApply: false
+---
+
+# Testing Rules — Velora Bundles
+
+## Testing philosophy
+- Unit tests for: Shopify Function logic, discount calculations, webhook handlers
+- Integration tests for: loader/action functions, DB operations
+- Manual QA: full user flows on dev store before every PR to main
+
+## Unit test pattern (Vitest)
+```typescript
+// tests/discount.test.ts
+import { describe, it, expect } from "vitest";
+import { calculateDiscount } from "~/utils/discount";
+
+describe("calculateDiscount", () => {
+  it("applies percentage discount correctly", () => {
+    const result = calculateDiscount({
+      type: "PERCENTAGE",
+      value: 10,
+      originalPrice: 100
+    });
+    expect(result.finalPrice).toBe(90);
+    expect(result.savedAmount).toBe(10);
+  });
+
+  it("applies fixed amount discount correctly", () => {
+    const result = calculateDiscount({
+      type: "FIXED_AMOUNT",
+      value: 15,
+      originalPrice: 100
+    });
+    expect(result.finalPrice).toBe(85);
+  });
+
+  it("never discounts below zero", () => {
+    const result = calculateDiscount({
+      type: "FIXED_AMOUNT",
+      value: 200,
+      originalPrice: 50
+    });
+    expect(result.finalPrice).toBeGreaterThanOrEqual(0);
+  });
+});
+```
+
+## Shopify Function test pattern
+```typescript
+// extensions/velora-discount/src/index.test.ts
+import { describe, it, expect } from "vitest";
+import { run } from "./index";
+
+const createInput = (productIds: string[], qty: number) => ({
+  cart: {
+    lines: productIds.map((id, i) => ({
+      id: `line_${i}`,
+      quantity: qty,
+      merchandise: { product: { id } }
+    }))
+  },
+  shop: {
+    metafield: {
+      value: JSON.stringify([{
+        productIds,
+        minQuantity: 2,
+        discountPercentage: 10
+      }])
+    }
+  }
+});
+
+describe("Shopify Function", () => {
+  it("applies discount when bundle matched", () => {
+    const input = createInput(["prod_1", "prod_2"], 2);
+    const result = run(input);
+    expect(result.discounts).toHaveLength(1);
+    expect(result.discounts[0].value.percentage.value).toBe("10");
+  });
+
+  it("no discount when quantity below minimum", () => {
+    const input = createInput(["prod_1", "prod_2"], 1);
+    const result = run(input);
+    expect(result.discounts).toHaveLength(0);
+  });
+});
+```
+
+## Webhook HMAC verification test
+```typescript
+// tests/webhooks.test.ts
+import { describe, it, expect } from "vitest";
+import { verifyWebhookHmac } from "~/utils/webhooks.server";
+
+describe("Webhook HMAC verification", () => {
+  it("accepts valid HMAC", async () => {
+    const body = JSON.stringify({ id: "order_123" });
+    const secret = process.env.SHOPIFY_API_SECRET!;
+    const validHmac = generateTestHmac(body, secret);
+    
+    const isValid = await verifyWebhookHmac(body, validHmac, secret);
+    expect(isValid).toBe(true);
+  });
+
+  it("rejects invalid HMAC", async () => {
+    const isValid = await verifyWebhookHmac(
+      '{"id": "order_123"}',
+      "invalid_hmac",
+      process.env.SHOPIFY_API_SECRET!
+    );
+    expect(isValid).toBe(false);
+  });
+});
+```
+
+## Manual QA checklist — run before every PR to main
+
+### Install + auth flow
+- [ ] Fresh install on dev store via Partner Dashboard
+- [ ] OAuth redirect completes successfully
+- [ ] Onboarding wizard shows for new install
+- [ ] App loads in Shopify Admin iframe
+- [ ] Uninstall → shop.isActive = false in DB
+- [ ] Reinstall → shop.isActive = true, existing data preserved
+
+### Bundle CRUD
+- [ ] Create fixed bundle with 2 products
+- [ ] Create bundle with 3 volume discount tiers
+- [ ] Live preview updates as fields change
+- [ ] Save bundle → appears in list
+- [ ] Edit bundle → changes saved correctly
+- [ ] Archive bundle → disappears from active list
+- [ ] Free plan: create 2nd bundle → upgrade prompt shows
+
+### Storefront widget
+- [ ] Widget appears on product page (Dawn theme)
+- [ ] Widget appears on product page (at least 1 other theme)
+- [ ] Radio options show correctly with pricing
+- [ ] "Most Popular" badge shows on correct tier
+- [ ] Strikethrough original price shows correctly
+- [ ] Variant selectors appear for products with variants
+- [ ] Mobile view: 375px — widget still readable
+- [ ] Select bundle option → click ATC → correct items in cart
+- [ ] Discount applied correctly at checkout
+
+### Billing
+- [ ] Free plan: 1 bundle limit enforced
+- [ ] Upgrade to Starter $9.99 → plan updates in DB
+- [ ] 14-day trial starts correctly
+- [ ] Downgrade plan → plan updates in DB
+- [ ] Settings page shows correct current plan
+
+### Webhooks
+```bash
+# Test each webhook via CLI
+shopify app webhook trigger --topic=orders/paid
+shopify app webhook trigger --topic=app/uninstalled
+shopify app webhook trigger --topic=customers/data_request
+shopify app webhook trigger --topic=customers/redact
+shopify app webhook trigger --topic=shop/redact
+```
+- [ ] orders/paid → bundle analytics incremented
+- [ ] app/uninstalled → shop.isActive = false
+- [ ] GDPR webhooks → respond 200 (no data to delete)
+- [ ] Invalid HMAC → 401 response
+
+### Analytics
+- [ ] Dashboard shows correct MRR stat
+- [ ] Widget views increment on page load
+- [ ] Click-through rate calculates correctly
+- [ ] Revenue chart renders (30 day view)
+- [ ] Top bundle card shows correct bundle
+
+### Performance
+- [ ] Widget loads under 300ms (check DevTools Network tab)
+- [ ] Admin pages load under 2s
+- [ ] Lighthouse score > 80 on main pages
+- [ ] Zero console errors in production mode
+
+### Security
+- [ ] Request shop A data while authenticated as shop B → 403
+- [ ] Send webhook with invalid HMAC → 401
+- [ ] SQL injection attempt via bundle name → no effect
+- [ ] XSS attempt in bundle title → escaped in widget
+
+## Edge cases — always test these
+- Bundle with product that was deleted from Shopify → graceful error message
+- Bundle with 0 discount value → validation error shown
+- Store with 0 products → empty product picker with message
+- Duplicate webhook (same shopifyWebhookId) → processed once only
+- Very long product name (100+ chars) → truncated in widget
+- Non-English store (Japanese, Arabic) → widget renders correctly
+- Store currency is EUR/GBP → prices shown in correct currency

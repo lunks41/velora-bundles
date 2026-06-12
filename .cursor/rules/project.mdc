@@ -1,0 +1,120 @@
+---
+description: Velora Bundles — global project rules applied to every file and every prompt
+alwaysApply: true
+---
+
+# Velora Bundles — Master Project Rules
+
+## What this project is
+Velora Bundles is a Shopify App Store app that lets merchants create product bundles, volume discounts, and BOGO deals to increase Average Order Value (AOV). Built by a solo developer. Simple, clean, affordable — competing against Kaching Bundles and Fast Bundle.
+
+## Tech stack — never deviate
+- **Framework**: React Router v7 (formerly Remix) — Shopify's official framework
+- **Language**: TypeScript strict mode — no `any` types, no implicit types
+- **UI**: Shopify Polaris web components — NEVER use raw HTML or Tailwind in admin UI
+- **Admin embed**: Shopify App Bridge — all navigation via App Bridge
+- **ORM**: Prisma — never write raw SQL queries
+- **Database**: PostgreSQL (production), SQLite (local dev only)
+- **Cache**: Redis via ioredis — cache all analytics, bundle configs, sessions
+- **API**: Shopify GraphQL Admin API ONLY — REST API is deprecated, never use it
+- **Discount engine**: Shopify Functions (TypeScript) — NOT Shopify Scripts (deprecated June 2026)
+- **Storefront**: Theme App Extension (Liquid + vanilla JS) — no React on storefront
+- **Payments**: Shopify Billing API — never charge merchants directly
+- **Hosting**: Railway (Node.js + PostgreSQL + Redis)
+- **Error tracking**: Sentry (@sentry/node)
+- **Emails**: Resend (transactional emails)
+
+## Folder structure
+```
+velora-bundles/
+├── app/
+│   ├── routes/
+│   │   ├── app._index.tsx          # Dashboard
+│   │   ├── app.bundles.tsx         # Bundle list
+│   │   ├── app.bundles.$id.tsx     # Create/Edit bundle
+│   │   ├── app.analytics.tsx       # Analytics detail
+│   │   ├── app.settings.tsx        # Settings
+│   │   ├── app.onboarding.tsx      # Onboarding wizard
+│   │   ├── app.billing.tsx         # Plan management
+│   │   └── webhooks.tsx            # All Shopify webhooks
+│   ├── shopify.server.ts           # Auth + billing config
+│   ├── db.server.ts                # Prisma client singleton
+│   ├── redis.server.ts             # Redis client singleton
+│   ├── utils/
+│   │   ├── analytics.server.ts     # Analytics helpers
+│   │   ├── billing.server.ts       # Billing helpers
+│   │   ├── metafields.server.ts    # Sync bundle → metafields
+│   │   └── webhooks.server.ts      # Webhook HMAC + handlers
+│   └── components/
+│       ├── BundlePreview.tsx       # Live widget preview
+│       ├── BundleForm.tsx          # Bundle editor form
+│       └── AnalyticsChart.tsx      # Revenue charts
+├── extensions/
+│   ├── velora-discount/            # Shopify Function
+│   │   └── src/index.ts
+│   └── bundle-widget/              # Theme App Extension
+│       ├── blocks/bundle.liquid
+│       └── assets/
+│           ├── bundle-widget.js
+│           └── bundle-widget.css
+├── prisma/
+│   ├── schema.prisma
+│   └── migrations/
+├── .cursor/
+│   ├── rules/
+│   └── agents/
+└── docs/
+```
+
+## Code rules — always follow
+
+### TypeScript
+- Strict mode enabled — no `any`, no implicit returns
+- All async functions return typed Promises
+- All Prisma queries use typed return values
+- Export types from a shared types.ts file
+
+### React Router v7 patterns
+- Data fetching ALWAYS in `loader` functions — never useEffect for data
+- Form submissions ALWAYS in `action` functions — never fetch() for mutations
+- Use `useFetcher` for optimistic UI updates
+- Use `useLoaderData` and `useActionData` for typed data access
+
+### Polaris patterns
+- Every admin page wraps in `<Page>` component
+- Forms use `<Form>` + `<FormLayout>` + Polaris field components
+- Loading states: use `<SkeletonPage>` and `<SkeletonBodyText>`
+- Empty states: use `<EmptyState>` with illustration and CTA
+- Errors: use `<Banner status="critical">` — never console.error only
+- Toasts: use `useToast()` hook for all success/error notifications
+
+### Prisma patterns
+- Always use `prisma.$transaction()` for multi-table writes
+- Always include `where: { shopId: session.shop }` to prevent cross-shop data leaks
+- Never SELECT * — always specify fields you need
+- Use `upsert` for webhook handlers (idempotency)
+
+### Security — non-negotiable
+- Verify HMAC signature on every incoming webhook — reject 401 if invalid
+- Encrypt access_token before storing in DB (use AES-256)
+- Never log access tokens, never expose to frontend
+- Always validate `session.shop` matches requested resource
+- Rate limit API endpoints: 100 req/min per shop via Redis
+
+### Redis caching
+- Analytics queries: 5 min TTL
+- Bundle list per shop: 2 min TTL
+- Shop plan: 1 hour TTL
+- Widget bundle data: 30 sec TTL (storefront reads this)
+- Always invalidate relevant cache keys on write operations
+
+### Error handling
+- Every loader and action wrapped in try/catch
+- Log errors to Sentry: `Sentry.captureException(error)`
+- Return typed error responses — never throw unhandled errors
+- Shopify API errors: log + return user-friendly message
+
+### Testing mindset
+- After every feature: manually test the full happy path on dev store
+- Test error cases: missing data, expired session, invalid HMAC
+- Test mobile: 375px viewport minimum

@@ -1,0 +1,45 @@
+# Velora Bundles — Shopify App Configuration
+name = "velora-bundles"
+client_id = "30b889dcdb987712cf618ecbb7c7612e"
+application_url = "https://app.velorabundles.com"
+embedded = true
+
+[access_scopes]
+scopes = "write_products,read_orders,write_discounts,read_themes"
+
+[auth]
+redirect_urls = [ "https://app.velorabundles.com/auth/callback" ]
+
+[webhooks]
+api_version = "2025-10"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks"
+  topics = ["app/uninstalled"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks"
+  topics = ["app/scopes_update"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks"
+  topics = ["orders/paid"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks"
+  topics = ["products/update"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks"
+  compliance_topics = ["customers/data_request"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks"
+  compliance_topics = ["customers/redact"]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks"
+  compliance_topics = ["shop/redact"]
+
+[build]
+automatically_update_urls_on_dev = true

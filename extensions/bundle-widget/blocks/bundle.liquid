@@ -1,0 +1,36 @@
+<div
+  id="velora-bundle-widget"
+  class="velora-bundle-widget"
+  data-shop-domain="{{ shop.permanent_domain }}"
+  data-product-id="{{ product.id }}"
+  data-position="{{ block.settings.position }}"
+  data-app-url="{{ block.settings.app_url }}"
+></div>
+
+{% schema %}
+{
+  "name": "Velora Bundle",
+  "target": "section",
+  "stylesheet": "bundle-widget.css",
+  "javascript": "bundle-widget.js",
+  "settings": [
+    {
+      "type": "select",
+      "id": "position",
+      "label": "Widget position",
+      "default": "above_atc",
+      "options": [
+        { "value": "above_atc", "label": "Above add to cart" },
+        { "value": "below_atc", "label": "Below add to cart" }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "app_url",
+      "label": "App URL",
+      "default": "https://app.velorabundles.com",
+      "info": "Velora Bundles app URL for widget API requests"
+    }
+  ]
+}
+{% endschema %}

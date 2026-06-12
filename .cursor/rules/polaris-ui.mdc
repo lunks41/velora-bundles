@@ -1,0 +1,303 @@
+---
+description: Polaris UI rules — applied when building any admin UI component or page
+globs: ["app/routes/app.*.tsx", "app/components/**"]
+alwaysApply: false
+---
+
+# Polaris UI Rules — Velora Bundles
+
+## Core principle
+Every admin UI component uses Shopify Polaris web components.
+Never use raw HTML divs, spans, or inputs in admin pages.
+Never use Tailwind CSS in admin routes.
+
+## Page structure pattern
+```tsx
+// Every admin page follows this structure
+import {
+  Page, Layout, Card, BlockStack, InlineStack,
+  Text, Button, Badge, Divider
+} from "@shopify/polaris";
+
+export default function BundlesPage() {
+  const data = useLoaderData<typeof loader>();
+  
+  return (
+    <Page
+      title="Bundles"
+      primaryAction={{
+        content: "Create bundle",
+        onAction: () => navigate("/app/bundles/new")
+      }}
+    >
+      <Layout>
+        <Layout.Section>
+          <Card>
+            <BlockStack gap="400">
+              {/* Content here */}
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+        <Layout.Section variant="oneThird">
+          {/* Sidebar content */}
+        </Layout.Section>
+      </Layout>
+    </Page>
+  );
+}
+```
+
+## Split-screen live preview layout
+```tsx
+// Bundle editor with live preview
+export default function BundleEditor() {
+  const [formData, setFormData] = useState(defaultBundle);
+  
+  return (
+    <Page title="Create bundle" backAction={{ url: "/app/bundles" }}>
+      <Layout>
+        {/* Left: Form */}
+        <Layout.Section variant="oneHalf">
+          <BlockStack gap="400">
+            <Card>
+              <BlockStack gap="400">
+                <Text variant="headingMd">Bundle settings</Text>
+                <FormLayout>
+                  <TextField
+                    label="Bundle title"
+                    value={formData.title}
+                    onChange={(val) => setFormData(p => ({...p, title: val}))}
+                    autoComplete="off"
+                  />
+                  <Select
+                    label="Discount type"
+                    options={discountTypeOptions}
+                    value={formData.discountType}
+                    onChange={(val) => setFormData(p => ({...p, discountType: val}))}
+                  />
+                  <TextField
+                    label="Discount value"
+                    type="number"
+                    value={formData.discountValue.toString()}
+                    onChange={(val) => setFormData(p => ({...p, discountValue: Number(val)}))}
+                    suffix={formData.discountType === "PERCENTAGE" ? "%" : "$"}
+                    autoComplete="off"
+                  />
+                </FormLayout>
+              </BlockStack>
+            </Card>
+          </BlockStack>
+        </Layout.Section>
+        
+        {/* Right: Live preview */}
+        <Layout.Section variant="oneHalf">
+          <Card>
+            <BlockStack gap="400">
+              <Text variant="headingMd">Live preview</Text>
+              <BundlePreview bundle={formData} />
+            </BlockStack>
+          </Card>
+        </Layout.Section>
+      </Layout>
+    </Page>
+  );
+}
+```
+
+## ResourceList pattern (bundle list)
+```tsx
+<ResourceList
+  resourceName={{ singular: "bundle", plural: "bundles" }}
+  items={bundles}
+  renderItem={(bundle) => (
+    <ResourceItem
+      id={bundle.id}
+      url={`/app/bundles/${bundle.id}`}
+      accessibilityLabel={`Edit ${bundle.name}`}
+    >
+      <InlineStack align="space-between">
+        <BlockStack gap="100">
+          <Text variant="bodyMd" fontWeight="bold">{bundle.name}</Text>
+          <Text variant="bodySm" tone="subdued">
+            {bundle.bundleType} · {bundle.products.length} products
+          </Text>
+        </BlockStack>
+        <InlineStack gap="300" blockAlign="center">
+          <Text variant="bodyMd">${bundle.analytics?.revenue.toFixed(2) ?? "0.00"}</Text>
+          <Badge tone={bundle.status === "ACTIVE" ? "success" : "info"}>
+            {bundle.status}
+          </Badge>
+        </InlineStack>
+      </InlineStack>
+    </ResourceItem>
+  )}
+  emptyState={
+    <EmptyState
+      heading="Create your first bundle"
+      action={{ content: "Create bundle", url: "/app/bundles/new" }}
+      image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+    >
+      <p>Bundles help you increase average order value by offering deals when customers buy multiple products.</p>
+    </EmptyState>
+  }
+/>
+```
+
+## Dashboard stats cards
+```tsx
+<Layout>
+  <Layout.Section variant="oneThird">
+    <Card>
+      <BlockStack gap="200">
+        <Text variant="bodySm" tone="subdued">Bundle revenue this month</Text>
+        <Text variant="heading2xl">${totalRevenue.toFixed(2)}</Text>
+        <Badge tone="success">+{revenueGrowth}% vs last month</Badge>
+      </BlockStack>
+    </Card>
+  </Layout.Section>
+  <Layout.Section variant="oneThird">
+    <Card>
+      <BlockStack gap="200">
+        <Text variant="bodySm" tone="subdued">Widget views</Text>
+        <Text variant="heading2xl">{widgetViews.toLocaleString()}</Text>
+      </BlockStack>
+    </Card>
+  </Layout.Section>
+  <Layout.Section variant="oneThird">
+    <Card>
+      <BlockStack gap="200">
+        <Text variant="bodySm" tone="subdued">Click-through rate</Text>
+        <Text variant="heading2xl">{ctr}%</Text>
+      </BlockStack>
+    </Card>
+  </Layout.Section>
+</Layout>
+```
+
+## Loading states
+```tsx
+// Use SkeletonPage while data loads
+if (isLoading) {
+  return (
+    <SkeletonPage primaryAction>
+      <Layout>
+        <Layout.Section>
+          <Card><SkeletonBodyText lines={6} /></Card>
+        </Layout.Section>
+      </Layout>
+    </SkeletonPage>
+  );
+}
+```
+
+## Error banner
+```tsx
+{actionData?.error && (
+  <Banner tone="critical" title="Something went wrong">
+    <p>{actionData.error}</p>
+  </Banner>
+)}
+```
+
+## Toast notifications
+```tsx
+const { show: showToast } = useToast();
+
+// On save success
+showToast("Bundle saved successfully");
+
+// On error
+showToast("Failed to save bundle", { isError: true });
+```
+
+## Modal for destructive actions
+```tsx
+<Modal
+  open={showDeleteModal}
+  onClose={() => setShowDeleteModal(false)}
+  title="Delete bundle?"
+  primaryAction={{
+    content: "Delete",
+    destructive: true,
+    onAction: handleDelete
+  }}
+  secondaryActions={[{
+    content: "Cancel",
+    onAction: () => setShowDeleteModal(false)
+  }]}
+>
+  <Modal.Section>
+    <Text>This will permanently delete "{bundle.name}". This cannot be undone.</Text>
+  </Modal.Section>
+</Modal>
+```
+
+## Plan gate component
+```tsx
+// Show upgrade prompt when feature is locked
+function PlanGate({ requiredPlan, currentPlan, children }) {
+  const hasAccess = PLAN_HIERARCHY[currentPlan] >= PLAN_HIERARCHY[requiredPlan];
+  
+  if (!hasAccess) {
+    return (
+      <Banner
+        title={`${requiredPlan} plan required`}
+        action={{ content: "Upgrade now", url: "/app/billing" }}
+        tone="warning"
+      >
+        <p>This feature is available on the {requiredPlan} plan and above.</p>
+      </Banner>
+    );
+  }
+  
+  return children;
+}
+```
+
+## Onboarding wizard
+```tsx
+// 3-step progress wizard
+const steps = ["Welcome", "Create bundle", "Go live"];
+
+<Card>
+  <BlockStack gap="600">
+    {/* Progress steps */}
+    <InlineStack gap="400" align="center">
+      {steps.map((step, i) => (
+        <InlineStack key={step} gap="200" blockAlign="center">
+          <Box
+            background={i <= currentStep ? "bg-fill-success" : "bg-fill-secondary"}
+            borderRadius="full"
+            padding="100"
+            width="24px"
+          >
+            <Text alignment="center" tone={i <= currentStep ? "magic" : "subdued"}>
+              {i < currentStep ? "✓" : i + 1}
+            </Text>
+          </Box>
+          <Text tone={i === currentStep ? "base" : "subdued"}>{step}</Text>
+          {i < steps.length - 1 && <Divider borderColor="border" />}
+        </InlineStack>
+      ))}
+    </InlineStack>
+    
+    {/* Step content */}
+    {currentStep === 0 && <WelcomeStep />}
+    {currentStep === 1 && <CreateBundleStep />}
+    {currentStep === 2 && <GoLiveStep />}
+    
+    {/* Navigation */}
+    <InlineStack align="end" gap="300">
+      {currentStep > 0 && (
+        <Button onClick={() => setStep(s => s - 1)}>Back</Button>
+      )}
+      <Button
+        variant="primary"
+        onClick={() => currentStep < 2 ? setStep(s => s + 1) : completeOnboarding()}
+      >
+        {currentStep === 2 ? "Finish setup" : "Continue"}
+      </Button>
+    </InlineStack>
+  </BlockStack>
+</Card>
+```

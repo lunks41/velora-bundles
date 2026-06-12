@@ -1,0 +1,281 @@
+---
+description: Database rules — applied when working on Prisma schema, migrations, or any DB queries
+globs: ["prisma/**", "app/db.server.ts", "app/models/**", "app/utils/*.server.ts"]
+alwaysApply: false
+---
+
+# Database Rules — Prisma + PostgreSQL
+
+## Complete Prisma Schema
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id          String   @id
+  shop        String
+  state       String
+  isOnline    Boolean  @default(false)
+  scope       String?
+  expires     DateTime?
+  accessToken String
+  userId      BigInt?
+  firstName   String?
+  lastName    String?
+  email       String?
+  accountOwner Boolean @default(false)
+  locale      String?
+  collaborator Boolean? @default(false)
+  emailVerified Boolean? @default(false)
+}
+
+model Shop {
+  id                String    @id @default(cuid())
+  shopDomain        String    @unique
+  accessToken       String    // AES-256 encrypted
+  scope             String
+  plan              Plan      @default(FREE)
+  billingChargeId   String?
+  isActive          Boolean   @default(true)
+  onboardingDone    Boolean   @default(false)
+  currency          String    @default("USD")
+  timezone          String    @default("UTC")
+  email             String?
+  installedAt       DateTime  @default(now())
+  uninstalledAt     DateTime?
+  updatedAt         DateTime  @updatedAt
+  bundles           Bundle[]
+  analytics         BundleAnalytics[]
+  webhookLogs       WebhookLog[]
+}
+
+model Bundle {
+  id              String      @id @default(cuid())
+  shopId          String
+  shop            Shop        @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name            String
+  status          BundleStatus @default(DRAFT)
+  bundleType      BundleType  @default(FIXED)
+  discountType    DiscountType
+  discountValue   Float
+  title           String      // Widget display title
+  description     String?
+  widgetPosition  String      @default("above_atc")
+  customCss       String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  products        BundleProduct[]
+  volumeDiscounts VolumeDiscount[]
+  analytics       BundleAnalytics[]
+  abTests         AbTest[]
+
+  @@index([shopId, status])
+}
+
+model BundleProduct {
+  id                  String  @id @default(cuid())
+  bundleId            String
+  bundle              Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  shopifyProductId    String  // gid://shopify/Product/123
+  shopifyVariantId    String? // gid://shopify/ProductVariant/456
+  productTitle        String  // cached for display
+  productImageUrl     String? // cached thumbnail
+  quantity            Int     @default(1)
+  sortOrder           Int     @default(0)
+
+  @@index([bundleId])
+}
+
+model VolumeDiscount {
+  id            String      @id @default(cuid())
+  bundleId      String
+  bundle        Bundle      @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  minQuantity   Int
+  maxQuantity   Int?
+  discountType  DiscountType
+  discountValue Float
+  label         String      // "Buy 2 Save 10%"
+  isMostPopular Boolean     @default(false)
+  sortOrder     Int         @default(0)
+
+  @@index([bundleId])
+}
+
+model BundleAnalytics {
+  id              String   @id @default(cuid())
+  bundleId        String
+  bundle          Bundle   @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  shopId          String
+  shop            Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  date            DateTime @db.Date
+  views           Int      @default(0)
+  clicks          Int      @default(0)
+  orders          Int      @default(0)
+  revenue         Float    @default(0)
+  discountGiven   Float    @default(0)
+
+  @@unique([bundleId, date])
+  @@index([shopId, date])
+}
+
+model WebhookLog {
+  id                String    @id @default(cuid())
+  shopId            String
+  shop              Shop      @relation(fields: [shopId], references: [id])
+  topic             String
+  shopifyWebhookId  String    @unique
+  payload           Json?
+  processed         Boolean   @default(false)
+  processedAt       DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@index([shopifyWebhookId])
+}
+
+model AbTest {
+  id          String   @id @default(cuid())
+  bundleId    String
+  bundle      Bundle   @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  variantA    Json     // bundle config A
+  variantB    Json     // bundle config B
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  winner      String?  // "A" | "B" | null
+  status      String   @default("running")
+
+  @@index([bundleId])
+}
+
+enum Plan {
+  FREE
+  STARTER
+  GROWTH
+  PRO
+}
+
+enum BundleStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum BundleType {
+  FIXED
+  FREQUENTLY_BOUGHT_TOGETHER
+  MIX_MATCH
+  BOGO
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  SPECIAL_PRICE
+}
+```
+
+## DB query patterns — always use these
+
+### Safe shop-scoped query
+```typescript
+// ALWAYS include shopId in where clause
+const bundles = await prisma.bundle.findMany({
+  where: {
+    shopId: session.shop, // prevent cross-shop data leak
+    status: { not: "ARCHIVED" }
+  },
+  include: {
+    products: { orderBy: { sortOrder: "asc" } },
+    volumeDiscounts: { orderBy: { sortOrder: "asc" } }
+  },
+  orderBy: { createdAt: "desc" }
+});
+```
+
+### Analytics upsert (webhook-safe)
+```typescript
+await prisma.bundleAnalytics.upsert({
+  where: { bundleId_date: { bundleId, date: today } },
+  update: {
+    orders: { increment: 1 },
+    revenue: { increment: orderAmount }
+  },
+  create: {
+    bundleId,
+    shopId,
+    date: today,
+    orders: 1,
+    revenue: orderAmount
+  }
+});
+```
+
+### Transaction for bundle save
+```typescript
+await prisma.$transaction(async (tx) => {
+  // 1. Save bundle
+  const bundle = await tx.bundle.upsert({ ... });
+  
+  // 2. Delete old products + discounts
+  await tx.bundleProduct.deleteMany({ where: { bundleId: bundle.id } });
+  await tx.volumeDiscount.deleteMany({ where: { bundleId: bundle.id } });
+  
+  // 3. Create new products + discounts
+  await tx.bundleProduct.createMany({ data: products });
+  await tx.volumeDiscount.createMany({ data: discounts });
+  
+  return bundle;
+});
+```
+
+## Redis patterns
+```typescript
+// redis.server.ts
+import Redis from "ioredis";
+
+let redis: Redis;
+declare global { var __redis: Redis | undefined; }
+
+if (process.env.NODE_ENV === "production") {
+  redis = new Redis(process.env.REDIS_URL!);
+} else {
+  if (!global.__redis) {
+    global.__redis = new Redis(process.env.REDIS_URL!);
+  }
+  redis = global.__redis;
+}
+
+export { redis };
+
+// Cache helpers
+export const CACHE_TTL = {
+  ANALYTICS: 300,      // 5 min
+  BUNDLE_LIST: 120,    // 2 min
+  SHOP_PLAN: 3600,     // 1 hour
+  WIDGET_DATA: 30,     // 30 sec
+};
+
+export async function getCached<T>(
+  key: string,
+  fetcher: () => Promise<T>,
+  ttl: number
+): Promise<T> {
+  const cached = await redis.get(key);
+  if (cached) return JSON.parse(cached);
+  
+  const fresh = await fetcher();
+  await redis.setex(key, ttl, JSON.stringify(fresh));
+  return fresh;
+}
+
+export async function invalidateShopCache(shopId: string) {
+  const keys = await redis.keys(`shop:${shopId}:*`);
+  if (keys.length > 0) await redis.del(...keys);
+}
+```

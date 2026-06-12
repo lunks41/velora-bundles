@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+}
+
+model Shop {
+  id              String            @id @default(cuid())
+  shopDomain      String            @unique
+  accessToken     String
+  scope           String
+  plan            Plan              @default(FREE)
+  billingChargeId String?
+  isActive        Boolean           @default(true)
+  onboardingDone  Boolean           @default(false)
+  currency        String            @default("USD")
+  timezone        String            @default("UTC")
+  email           String?
+  widgetSettings  Json?
+  installedAt     DateTime          @default(now())
+  uninstalledAt   DateTime?
+  updatedAt       DateTime          @updatedAt
+  bundles         Bundle[]
+  analytics       BundleAnalytics[]
+  webhookLogs     WebhookLog[]
+}
+
+model Bundle {
+  id              String           @id @default(cuid())
+  shopId          String
+  shop            Shop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name            String
+  status          BundleStatus     @default(DRAFT)
+  bundleType      BundleType       @default(FIXED)
+  discountType    DiscountType
+  discountValue   Float
+  title           String
+  description     String?
+  widgetPosition  String           @default("above_atc")
+  customCss       String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  products        BundleProduct[]
+  volumeDiscounts VolumeDiscount[]
+  analytics       BundleAnalytics[]
+  abTests         AbTest[]
+
+  @@index([shopId, status])
+}
+
+model BundleProduct {
+  id               String  @id @default(cuid())
+  bundleId         String
+  bundle           Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  shopifyProductId String
+  shopifyVariantId String?
+  productTitle     String
+  productImageUrl  String?
+  quantity         Int     @default(1)
+  sortOrder        Int     @default(0)
+
+  @@index([bundleId])
+}
+
+model VolumeDiscount {
+  id            String       @id @default(cuid())
+  bundleId      String
+  bundle        Bundle       @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  minQuantity   Int
+  maxQuantity   Int?
+  discountType  DiscountType
+  discountValue Float
+  label         String
+  isMostPopular Boolean      @default(false)
+  sortOrder     Int          @default(0)
+
+  @@index([bundleId])
+}
+
+model BundleAnalytics {
+  id            String   @id @default(cuid())
+  bundleId      String
+  bundle        Bundle   @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  shopId        String
+  shop          Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  date          DateTime @db.Date
+  views         Int      @default(0)
+  clicks        Int      @default(0)
+  orders        Int      @default(0)
+  revenue       Float    @default(0)
+  discountGiven Float    @default(0)
+
+  @@unique([bundleId, date])
+  @@index([shopId, date])
+}
+
+model WebhookLog {
+  id               String    @id @default(cuid())
+  shopId           String
+  shop             Shop      @relation(fields: [shopId], references: [id])
+  topic            String
+  shopifyWebhookId String    @unique
+  payload          Json?
+  processed        Boolean   @default(false)
+  processedAt      DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@index([shopifyWebhookId])
+}
+
+model AbTest {
+  id        String    @id @default(cuid())
+  bundleId  String
+  bundle    Bundle    @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  variantA  Json
+  variantB  Json
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+  winner    String?
+  status    String    @default("running")
+
+  @@index([bundleId])
+}
+
+enum Plan {
+  FREE
+  STARTER
+  GROWTH
+  PRO
+}
+
+enum BundleStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum BundleType {
+  FIXED
+  FREQUENTLY_BOUGHT_TOGETHER
+  MIX_MATCH
+  BOGO
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  SPECIAL_PRICE
+}
