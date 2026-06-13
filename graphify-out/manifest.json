@@ -1,0 +1,178 @@
+{
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\env.d.ts": {
+    "mtime": 1780728634.776434,
+    "hash": "92aae16b1d534d0fc142bef56e8efb3e"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\react-router.config.ts": {
+    "mtime": 1781279703.171432,
+    "hash": "a356ea6786c6deb14982db8aa345dc38"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\vite.config.ts": {
+    "mtime": 1781279684.7108197,
+    "hash": "d61efb8ff721a8afdd74435b8a658319"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\db.server.ts": {
+    "mtime": 1780728634.756435,
+    "hash": "68a5748b23927b8df44059b9ffb8d77f"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\entry.server.tsx": {
+    "mtime": 1780728634.7574334,
+    "hash": "5a39fdd9488d479a5cde5361ba466fe6"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\globals.d.ts": {
+    "mtime": 1780728634.7574334,
+    "hash": "0ed79c85de5bb2f1af5976079d448b19"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\redis.server.ts": {
+    "mtime": 1780728662.7138608,
+    "hash": "4f5ba0d300b9dc1ebb2f63549a9100cd"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\root.tsx": {
+    "mtime": 1780728634.7584321,
+    "hash": "c905ff763aff26f8379dca5f073c4f18"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\routes.ts": {
+    "mtime": 1780728634.7584321,
+    "hash": "6b8b42d00b15e7737e1c87158e363953"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\sentry.server.ts": {
+    "mtime": 1780728919.0241537,
+    "hash": "ca2fe346ad8e5c6626d8fb58d5944c4c"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\shopify.server.ts": {
+    "mtime": 1781378574.846718,
+    "hash": "ca9b19bed43cde1a6ebb39de46f71a46"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\types.ts": {
+    "mtime": 1780728841.1018934,
+    "hash": "a79afe424f707ae513baf0e11a918d21"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\components\\AnalyticsChart.tsx": {
+    "mtime": 1780729036.4939685,
+    "hash": "18ec5bf0ed84763b93ba3b73f68d9850"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\components\\BundlePreview.tsx": {
+    "mtime": 1780729035.0202823,
+    "hash": "abb37cd762453827a8772670a7c4dda3"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\constants\\plans.ts": {
+    "mtime": 1780729220.878123,
+    "hash": "c95453f287b7b0daf2c27b1682bbd3aa"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\routes\\api.widget.$shop.$productId.ts": {
+    "mtime": 1780729054.3912985,
+    "hash": "5b5971762b897b3fa1b772b2c3ffe897"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\routes\\app.billing.tsx": {
+    "mtime": 1780729224.833784,
+    "hash": "6b89ed75ec82558ce925ff2ec9ee77a6"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\routes\\app.bundles.$id.tsx": {
+    "mtime": 1780729093.0457163,
+    "hash": "2a9a1aabf3a430347931e595210ef7ab"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\routes\\app.bundles.tsx": {
+    "mtime": 1780729199.1787899,
+    "hash": "1ae62cf6a5f480511953d4fdc46ee233"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\routes\\app.onboarding.tsx": {
+    "mtime": 1780729095.5381958,
+    "hash": "bf3a3512930554c1425c3dabdf5602ed"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\routes\\app.settings.tsx": {
+    "mtime": 1780729226.5386722,
+    "hash": "02cd9596979b7bc388e250a9c9b3c429"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\routes\\app.tsx": {
+    "mtime": 1780729070.90265,
+    "hash": "1f68e3eaf4a59853390d3ac4bf4fe957"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\routes\\app._index.tsx": {
+    "mtime": 1780729069.483824,
+    "hash": "5a8c2f05a1bb3cabfe48efb9b0957936"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\routes\\auth.$.tsx": {
+    "mtime": 1780728634.7734342,
+    "hash": "87d1c329505e67409ab232523a10dfc6"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\routes\\healthcheck.ts": {
+    "mtime": 1780729194.235243,
+    "hash": "ce52992d91ebd1c9315fbae3b0312914"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\routes\\webhooks.tsx": {
+    "mtime": 1780729051.5088253,
+    "hash": "df8ce9432ed84ceb290b0a432d99e6fa"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\routes\\auth.login\\error.server.tsx": {
+    "mtime": 1780728634.7734342,
+    "hash": "1e5bfa3d09ee43d820812459c622ad28"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\routes\\auth.login\\route.tsx": {
+    "mtime": 1780728634.7744331,
+    "hash": "33aa7f81a9caab4fffda2d37bd07ac0f"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\utils\\analytics.server.ts": {
+    "mtime": 1780728915.8512225,
+    "hash": "f41981229e53d0e17b5f554c3a8d3cf1"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\utils\\billing.server.ts": {
+    "mtime": 1780729223.5458846,
+    "hash": "31c51ba6b4847f578095fd9a0fadc9a5"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\utils\\crypto.server.ts": {
+    "mtime": 1780728841.9436631,
+    "hash": "5ce3a68a968fd3b7c1d3ad5f2fe204b2"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\utils\\graphql.server.ts": {
+    "mtime": 1780728903.757029,
+    "hash": "4e30726fb9a9dd5b21e3a099dd629729"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\utils\\metafields.server.ts": {
+    "mtime": 1780728906.0943134,
+    "hash": "0203bb2dc235162c4b4df6aee2fc34f2"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\utils\\shop.server.ts": {
+    "mtime": 1780729172.9367938,
+    "hash": "ff60ad7c562e007de55b6e074fd20ff1"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\app\\utils\\webhooks.server.ts": {
+    "mtime": 1780729049.9022346,
+    "hash": "e6d1c39f32d94e6b6c59da93752271d2"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\extensions\\bundle-widget\\assets\\bundle-widget.js": {
+    "mtime": 1780729068.971639,
+    "hash": "77bdeeee7901942b29b03c2b008abdd5"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\extensions\\velora-discount\\generated\\api.ts": {
+    "mtime": 1780729176.1064162,
+    "hash": "da30db71ea9c2be6f827bc48487b461d"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\extensions\\velora-discount\\src\\index.ts": {
+    "mtime": 1780729060.5602076,
+    "hash": "08d6891b70735ad6a5c05e697311da46"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\prisma\\migrations\\20250606120000_init\\migration.sql": {
+    "mtime": 1780729160.3562171,
+    "hash": "56f256419946932c0b3b606cccd31082"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\scripts\\pre-submit-check.ts": {
+    "mtime": 1780729136.0203743,
+    "hash": "09633dfc515e246b95607da5d7946e6a"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\LICENSE.md": {
+    "mtime": 1780728634.7554326,
+    "hash": "9134024082df2be2b9b0f8a85b26263c"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\README.md": {
+    "mtime": 1780727162.0,
+    "hash": "c3f7665ac6abd4a360df9591e5e8aa2a"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\docs\\cursor-prompts.md": {
+    "mtime": 1780727141.0,
+    "hash": "c72307328dfcff6a757a04f923e7868a"
+  },
+  "D:\\Proj\\Work\\velora-workspace\\velora-bundles\\docs\\api\\graphql-queries.md": {
+    "mtime": 1780727040.0,
+    "hash": "8919e8ec6e0441084173ab64c5821084"
+  }
+}
