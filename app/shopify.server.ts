@@ -11,6 +11,36 @@ import { upsertShopFromSession } from "./utils/shop.server";
 
 initSentry();
 
+function cleanEnv(value: string | undefined): string {
+  if (!value) return "";
+  return value.replace(/^["'\s]+|["'\s]+$/g, "");
+}
+
+function cleanAppUrl(value: string | undefined): string {
+  return cleanEnv(value).replace(/\/+$/, "");
+}
+
+function parseScopes(value: string | undefined): string[] | undefined {
+  const scopes = cleanEnv(value)
+    .split(",")
+    .map((scope) => scope.trim())
+    .filter(Boolean);
+  return scopes.length > 0 ? scopes : undefined;
+}
+
+const shopifyApiKey = cleanEnv(process.env.SHOPIFY_API_KEY);
+const shopifyApiSecret = cleanEnv(process.env.SHOPIFY_API_SECRET);
+const shopifyAppUrl = cleanAppUrl(process.env.SHOPIFY_APP_URL);
+const shopifyScopes = parseScopes(process.env.SCOPES);
+
+if (process.env.NODE_ENV === "production") {
+  console.log("[velora-bundles] Shopify config loaded", {
+    appUrl: shopifyAppUrl,
+    apiKeyPrefix: shopifyApiKey ? `${shopifyApiKey.slice(0, 8)}...` : "(missing)",
+    scopeCount: shopifyScopes?.length ?? 0,
+  });
+}
+
 const prismaSessionStorage = new PrismaSessionStorage(prisma, {
   connectionRetries: 10,
   connectionRetryIntervalMs: 3000,
@@ -21,11 +51,11 @@ void prismaSessionStorage.isReady().catch((error: unknown) => {
 });
 
 const shopify = shopifyApp({
-  apiKey: process.env.SHOPIFY_API_KEY,
-  apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
+  apiKey: shopifyApiKey,
+  apiSecretKey: shopifyApiSecret,
   apiVersion: ApiVersion.October25,
-  scopes: process.env.SCOPES?.split(","),
-  appUrl: process.env.SHOPIFY_APP_URL || "",
+  scopes: shopifyScopes,
+  appUrl: shopifyAppUrl,
   authPathPrefix: "/auth",
   sessionStorage: prismaSessionStorage,
   distribution: AppDistribution.AppStore,
@@ -51,6 +81,7 @@ const shopify = shopifyApp({
 });
 
 export default shopify;
+export const apiKey = shopifyApiKey;
 export const apiVersion = ApiVersion.October25;
 export const addDocumentResponseHeaders = shopify.addDocumentResponseHeaders;
 export const authenticate = shopify.authenticate;
