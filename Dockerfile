@@ -16,4 +16,4 @@ COPY . .
 
 RUN npx prisma generate && npm run build
 
-CMD ["npm", "run", "docker-start"]
+CMD ["sh", "scripts/start.sh"]
