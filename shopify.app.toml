@@ -23,23 +23,7 @@ api_version = "2025-10"
 
   [[webhooks.subscriptions]]
   uri = "/webhooks"
-  topics = ["orders/paid"]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks"
   topics = ["products/update"]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks"
-  compliance_topics = ["customers/data_request"]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks"
-  compliance_topics = ["customers/redact"]
-
-  [[webhooks.subscriptions]]
-  uri = "/webhooks"
-  compliance_topics = ["shop/redact"]
 
 [build]
 automatically_update_urls_on_dev = true

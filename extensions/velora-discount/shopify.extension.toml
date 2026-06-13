@@ -3,6 +3,8 @@ api_version = "2025-10"
 [[extensions]]
 name = "velora-discount"
 handle = "velora-discount"
+
+uid = "5d6e0510-ed0e-11c7-97f2-4867c874a8ee795f0836"
 type = "function"
 description = "Velora bundle discounts"
 

@@ -3,4 +3,6 @@ api_version = "2025-10"
 [[extensions]]
 name = "bundle-widget"
 handle = "bundle-widget"
+
+uid = "8738ae3d-25c4-f928-2ab3-1488c50a48290045fd0b"
 type = "theme"
