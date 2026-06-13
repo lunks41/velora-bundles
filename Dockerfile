@@ -2,7 +2,7 @@ FROM node:20-slim
 
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 3000
+EXPOSE 8080
 
 WORKDIR /app
 

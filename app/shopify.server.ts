@@ -11,6 +11,15 @@ import { upsertShopFromSession } from "./utils/shop.server";
 
 initSentry();
 
+const prismaSessionStorage = new PrismaSessionStorage(prisma, {
+  connectionRetries: 10,
+  connectionRetryIntervalMs: 3000,
+});
+
+void prismaSessionStorage.isReady().catch((error: unknown) => {
+  console.error("[session-storage] initialization failed:", error);
+});
+
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
   apiSecretKey: process.env.SHOPIFY_API_SECRET || "",
@@ -18,10 +27,7 @@ const shopify = shopifyApp({
   scopes: process.env.SCOPES?.split(","),
   appUrl: process.env.SHOPIFY_APP_URL || "",
   authPathPrefix: "/auth",
-  sessionStorage: new PrismaSessionStorage(prisma, {
-    connectionRetries: 10,
-    connectionRetryIntervalMs: 3000,
-  }),
+  sessionStorage: prismaSessionStorage,
   distribution: AppDistribution.AppStore,
   future: {
     expiringOfflineAccessTokens: true,
