@@ -36,7 +36,7 @@
     "@shopify/app-bridge-react": "^4.2.4",
     "@shopify/shopify-app-react-router": "^1.1.0",
     "@shopify/shopify-app-session-storage-prisma": "^9.0.0",
-    "@types/ioredis": "^4.28.10",
+    "@types/ioredis": "^5.0.0",
     "compression": "^1.8.0",
     "express": "^4.21.2",
     "ioredis": "^5.11.1",
