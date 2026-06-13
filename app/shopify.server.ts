@@ -67,20 +67,24 @@ const shopify = shopifyApp({
         : LogSeverity.Info,
     httpRequests: process.env.SHOPIFY_DEBUG === "1",
   },
-  future: {
-    expiringOfflineAccessTokens: true,
-  },
   hooks: {
     afterAuth: async ({ session, admin }) => {
       if (!session.accessToken) return;
-      await upsertShopFromSession(
-        {
+      try {
+        await upsertShopFromSession(
+          {
+            shop: session.shop,
+            accessToken: session.accessToken,
+            scope: session.scope,
+          },
+          admin,
+        );
+      } catch (error) {
+        console.error("[velora-bundles] afterAuth shop upsert failed", {
           shop: session.shop,
-          accessToken: session.accessToken,
-          scope: session.scope,
-        },
-        admin,
-      );
+          error,
+        });
+      }
     },
   },
   ...(process.env.SHOP_CUSTOM_DOMAIN
