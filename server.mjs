@@ -17,6 +17,8 @@ async function start() {
   app.disable("x-powered-by");
 
   app.get("/healthcheck", (_req, res) => {
+    const appUrl = (process.env.SHOPIFY_APP_URL ?? "").replace(/\/+$/, "");
+    const apiKey = (process.env.SHOPIFY_API_KEY ?? "").replace(/^["'\s]+|["'\s]+$/g, "");
     res.status(200).json({
       status: "healthy",
       timestamp: new Date().toISOString(),
@@ -24,6 +26,11 @@ async function start() {
       version: process.env.APP_VERSION ?? "1.0.0",
       environment: process.env.NODE_ENV ?? "development",
       port: Number(process.env.PORT) || 8080,
+      shopify: {
+        appUrl: appUrl || "(missing)",
+        apiKeyPrefix: apiKey ? `${apiKey.slice(0, 8)}...` : "(missing)",
+        hasApiSecret: Boolean(process.env.SHOPIFY_API_SECRET),
+      },
     });
   });
 

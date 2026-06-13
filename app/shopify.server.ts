@@ -1,4 +1,5 @@
 import "@shopify/shopify-app-react-router/adapters/node";
+import { LogSeverity } from "@shopify/shopify-api";
 import {
   ApiVersion,
   AppDistribution,
@@ -59,6 +60,13 @@ const shopify = shopifyApp({
   authPathPrefix: "/auth",
   sessionStorage: prismaSessionStorage,
   distribution: AppDistribution.AppStore,
+  logger: {
+    level:
+      process.env.SHOPIFY_DEBUG === "1" || process.env.NODE_ENV === "production"
+        ? LogSeverity.Debug
+        : LogSeverity.Info,
+    httpRequests: process.env.SHOPIFY_DEBUG === "1",
+  },
   future: {
     expiringOfflineAccessTokens: true,
   },

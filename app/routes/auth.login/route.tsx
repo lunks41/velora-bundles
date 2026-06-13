@@ -3,7 +3,7 @@ import { useState } from "react";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { Form, useActionData, useLoaderData } from "react-router";
 
-import { login } from "../../shopify.server";
+import { apiKey, login } from "../../shopify.server";
 import { loginErrorMessage } from "./error.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -27,7 +27,7 @@ export default function Auth() {
   const { errors } = actionData || loaderData;
 
   return (
-    <AppProvider embedded={false}>
+    <AppProvider embedded={false} apiKey={apiKey}>
       <s-page>
         <Form method="post">
         <s-section heading="Log in">

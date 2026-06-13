@@ -7,7 +7,24 @@ import { authenticate, apiKey } from "../shopify.server";
 import prisma from "../db.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session } = await authenticate.admin(request);
+  let session;
+  try {
+    ({ session } = await authenticate.admin(request));
+  } catch (error) {
+    if (error instanceof Response) {
+      console.error("[velora-bundles] authenticate.admin failed", {
+        status: error.status,
+        statusText: error.statusText,
+        reauthUrl: error.headers.get("X-Shopify-API-Request-Failure-Reauthorize-Url"),
+        retryHeader: error.headers.get("X-Shopify-Retry-Invalid-Session-Request"),
+        url: request.url,
+        hasAuthHeader: Boolean(request.headers.get("authorization")),
+      });
+    } else {
+      console.error("[velora-bundles] authenticate.admin error", error);
+    }
+    throw error;
+  }
 
   const shop = await prisma.shop.findUnique({
     where: { shopDomain: session.shop },
