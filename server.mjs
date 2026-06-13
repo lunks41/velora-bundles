@@ -22,11 +22,17 @@ app.get("/healthcheck", (_req, res) => {
     uptime: Math.floor(process.uptime()),
     version: process.env.APP_VERSION ?? "1.0.0",
     environment: process.env.NODE_ENV ?? "development",
+    port: Number(process.env.PORT) || 8080,
   });
 });
 
-app.listen(port, host, () => {
+const server = app.listen(port, host, () => {
   console.log(`[velora-bundles] listening on http://${host}:${port}`);
+});
+
+server.on("error", (error) => {
+  console.error("[velora-bundles] failed to bind port:", error);
+  process.exit(1);
 });
 
 async function attachReactRouter() {

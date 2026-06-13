@@ -1,14 +1,14 @@
 # Velora Bundles — Shopify App Configuration
 name = "velora-bundles"
 client_id = "30b889dcdb987712cf618ecbb7c7612e"
-application_url = "https://app.velorabundles.com"
+application_url = "https://industrious-manifestation-production-2c16.up.railway.app"
 embedded = true
 
 [access_scopes]
 scopes = "write_products,read_orders,write_discounts,read_themes"
 
 [auth]
-redirect_urls = [ "https://app.velorabundles.com/auth/callback" ]
+redirect_urls = [ "https://industrious-manifestation-production-2c16.up.railway.app/auth/callback" ]
 
 [webhooks]
 api_version = "2025-10"
