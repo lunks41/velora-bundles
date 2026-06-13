@@ -44,5 +44,5 @@ if [ ! -f build/server/index.js ]; then
   npm run build
 fi
 
-echo "=== Launching server on ${HOST}:${PORT:-3000} ==="
-exec npm run start
+echo "=== Launching server on ${HOST}:${PORT:-8080} ==="
+exec node server.mjs
