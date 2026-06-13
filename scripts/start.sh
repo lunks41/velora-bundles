@@ -12,5 +12,5 @@ npx prisma generate
 echo "=== Running prisma migrate deploy ==="
 npx prisma migrate deploy
 
-echo "=== Launching server on $HOST:$PORT ==="
-exec npx react-router-serve ./build/server/index.js
+echo "=== Launching server on port ${PORT:-3000} ==="
+exec npm run start
