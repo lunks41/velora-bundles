@@ -25,15 +25,8 @@ if [ ! -f server.mjs ]; then
   exit 1
 fi
 
-# Start web server immediately so Railway can reach /healthcheck
-echo "=== Starting web server on port ${PORT:-8080} ==="
-node server.mjs &
-SERVER_PID=$!
-
 echo "=== Running prisma migrate deploy ==="
-npx prisma migrate deploy || {
-  echo "WARNING: prisma migrate deploy failed — server still running for debugging"
-}
+npx prisma migrate deploy
 
-echo "=== Server ready (pid $SERVER_PID) ==="
-wait $SERVER_PID
+echo "=== Starting web server on port ${PORT:-8080} ==="
+exec node server.mjs
